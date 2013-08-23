@@ -41,15 +41,13 @@ int main(int argc, char *argv[])
 QApplication *appPtr;
 WzMainWindow *mainWindowPtr;
 
-void wzMain(int &argc, char **argv)
-{
-	appPtr = new QApplication(argc, argv);
-}
-
-bool wzMain2()
+bool wzMain(int &argc, char **argv)
 {
 	debug(LOG_MAIN, "Qt initialization");
-	QGL::setPreferredPaintEngine(QPaintEngine::OpenGL); // Workaround for incorrect text rendering on nany platforms.
+
+	appPtr = new QApplication(argc, argv);
+
+	QGL::setPreferredPaintEngine(QPaintEngine::OpenGL); // Workaround for incorrect text rendering on many platforms.
 
 	// Setting up OpenGL
 	QGLFormat format;
@@ -102,7 +100,7 @@ bool wzMain2()
 	return true;
 }
 
-void wzMain3()
+void wzMain2()
 {
 	QApplication &app = *appPtr;
 	WzMainWindow &mainwindow = *mainWindowPtr;

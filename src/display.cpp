@@ -1037,7 +1037,16 @@ void processMouseClickInput(void)
 		}
 		else
 		{
-			wzSetCursor(CURSOR_DEFAULT);
+			if (keyDown(KEY_UPARROW))
+					wzSetCursor(CURSOR_UARROW);
+			else if (keyDown(KEY_DOWNARROW))
+						wzSetCursor(CURSOR_DARROW);
+			else if (keyDown(KEY_LEFTARROW))
+						wzSetCursor(CURSOR_LARROW);
+			else if (keyDown(KEY_RIGHTARROW))
+					wzSetCursor(CURSOR_RARROW);
+			//else
+			//wzSetCursor(CURSOR_DEFAULT);
 		}
 	}
 
@@ -1097,12 +1106,22 @@ void scroll(void)
 	if (mouseScroll && wzMouseInWindow())
 	{
 		// Scroll left or right
-		scrollDirLeftRight += (mouseX() > (pie_GetVideoBufferWidth() - BOUNDARY_X)) -
-		                       (mouseX() < BOUNDARY_X);
+		scrollDirLeftRight += (mouseX() > (pie_GetVideoBufferWidth() - BOUNDARY_X)) - (mouseX() < BOUNDARY_X);
 
 		// Scroll down or up
-		scrollDirUpDown += (mouseY() < BOUNDARY_Y) -
-		                    (mouseY() > (pie_GetVideoBufferHeight() - BOUNDARY_Y));
+		scrollDirUpDown += (mouseY() < BOUNDARY_Y) - (mouseY() > (pie_GetVideoBufferHeight() - BOUNDARY_Y));
+
+		if (scrollDirUpDown > 0)
+					wzSetCursor(CURSOR_UARROW);
+		else if (scrollDirUpDown < 0)
+						wzSetCursor(CURSOR_DARROW);
+		else if (scrollDirLeftRight < 0)
+						wzSetCursor(CURSOR_LARROW);
+		else if (scrollDirLeftRight > 0)
+					wzSetCursor(CURSOR_RARROW);
+		else
+			wzSetCursor(CURSOR_DEFAULT);
+
 	}
 	if (!keyDown(KEY_LCTRL) && !keyDown(KEY_RCTRL))
 	{
@@ -1111,6 +1130,7 @@ void scroll(void)
 
 		// Scroll down or up
 		scrollDirUpDown += keyDown(KEY_UPARROW) - keyDown(KEY_DOWNARROW);
+
 	}
 	CLIP(scrollDirLeftRight, -1, 1);
 	CLIP(scrollDirUpDown,    -1, 1);

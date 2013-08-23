@@ -152,6 +152,8 @@ enum MOUSE_KEY_CODE
 	MOUSE_LMB = 1,
 	MOUSE_MMB,
 	MOUSE_RMB,
+	MOUSE_X1,	// mouse button 4
+	MOUSE_X2,	// mouse button 5
 	MOUSE_WUP,
 	MOUSE_WDN,
 

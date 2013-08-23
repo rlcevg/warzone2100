@@ -22,17 +22,21 @@
 #define __INCLUDED_WZAPP_C_H__
 
 #include "frame.h"
-
-#include <QtCore/QSize>
+#include <vector>
 
 struct WZ_THREAD;
 struct WZ_MUTEX;
 struct WZ_SEMAPHORE;
 
+struct screeninfo {
+		int width;
+		int height;
+		int refresh_rate;
+		int screen;
+};
 
-void wzMain(int &argc, char **argv);
-bool wzMain2();
-void wzMain3();
+bool wzMain(int &argc, char **argv);
+void wzMain2(void);
 void wzQuit(void);              ///< Quit game
 void wzShutdown();
 void wzToggleFullscreen();
@@ -44,7 +48,8 @@ void wzReleaseMouse(void);	///< Undo the wzGrabMouse operation
 bool wzActiveWindow(void);	///< Whether application currently has the mouse pointer over it
 int wzGetTicks(void);		///< Milliseconds since start of game
 void wzFatalDialog(const char *text);	///< Throw up a modal warning dialog
-QList<QSize> wzAvailableResolutions();  ///< Get list of available resolutions.
+
+std::vector<screeninfo> wzAvailableResolutions();
 void wzSetSwapInterval(int swap);
 int wzGetSwapInterval();
 QString wzGetSelection();
