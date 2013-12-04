@@ -155,6 +155,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 		fpathSetDirectRoute(psDroid, x, y);
 		psDroid->sMove.Status = MOVENAVIGATE;
 		psDroid->sMove.pathIndex = 0;
+		unoccupyTile(psDroid);
 		return true;
 	}
 	// NOTE: While Vtols can fly, then can't go through things, like the transporter.
@@ -182,6 +183,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 
 		psDroid->sMove.Status = MOVENAVIGATE;
 		psDroid->sMove.pathIndex = 0;
+		unoccupyTile(psDroid);
 	}
 	else if (retVal == FPR_WAIT)
 	{
@@ -195,6 +197,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 		objTrace(psDroid->id, "Path to (%d, %d) failed for droid %d", (int)x, (int)y, (int)psDroid->id);
 		psDroid->sMove.Status = MOVEINACTIVE;
 		actionDroid(psDroid, DACTION_SULK);
+		occupyTile(psDroid);
 		return(false);
 	}
 
@@ -231,6 +234,7 @@ void moveDroidToDirect(DROID* psDroid, UDWORD x, UDWORD y)
 	fpathSetDirectRoute(psDroid, x, y);
 	psDroid->sMove.Status = MOVENAVIGATE;
 	psDroid->sMove.pathIndex = 0;
+	unoccupyTile(psDroid);
 }
 
 
@@ -358,6 +362,7 @@ static void moveShuffleDroid(DROID *psDroid, Vector2i s)
 	psDroid->sMove.target = tar;
 	psDroid->sMove.numPoints = 0;
 	psDroid->sMove.pathIndex = 0;
+	unoccupyTile(psDroid);
 
 	CHECK_DROID(psDroid);
 }
@@ -382,6 +387,7 @@ void moveStopDroid(DROID *psDroid)
 	else
 	{
 		psDroid->sMove.Status = MOVEINACTIVE;
+		occupyTile(psDroid);
 	}
 }
 
@@ -395,6 +401,8 @@ void moveReallyStopDroid(DROID *psDroid)
 
 	psDroid->sMove.Status = MOVEINACTIVE;
 	psDroid->sMove.speed = 0;
+
+	occupyTile(psDroid);
 }
 
 
@@ -465,7 +473,10 @@ struct BLOCKING_CALLBACK_DATA
 static bool moveBlockingTileCallback(Vector2i pos, int32_t dist, void *data_)
 {
 	BLOCKING_CALLBACK_DATA *data = (BLOCKING_CALLBACK_DATA *)data_;
-	data->blocking |= pos != data->src && pos != data->dst && fpathBlockingTile(map_coord(pos.x), map_coord(pos.y), data->propulsionType);
+	int32_t mapX = map_coord(pos.x);
+	int32_t mapY = map_coord(pos.y);
+	bool blockingTile = fpathBlockingTile(mapX, mapY, data->propulsionType) || TileIsOccupiedByUnit(mapTile(mapX, mapY));
+	data->blocking |= pos != data->src && pos != data->dst && blockingTile;
 	return !data->blocking;
 }
 
@@ -813,6 +824,7 @@ static void moveCalcBlockingSlide(DROID *psDroid, int32_t *pmx, int32_t *pmy, ui
 	{
 		objTrace(psDroid->id, "Was shuffling, now stopped");
 		psDroid->sMove.Status = MOVEINACTIVE;
+		occupyTile(psDroid);
 	}
 
 	// note the bump time and position if necessary
@@ -1908,6 +1920,7 @@ static void moveDescending( DROID *psDroid )
 
 		/* reset move state */
 		psDroid->sMove.Status = MOVEINACTIVE;
+		occupyTile(psDroid);
 
 		/* conform to terrain */
 		updateDroidOrientation(psDroid);
@@ -2204,6 +2217,7 @@ void moveUpdateDroid(DROID *psDroid)
 			else
 			{
 				psDroid->sMove.Status = MOVEINACTIVE;
+				occupyTile(psDroid);
 			}
 		}
 		else
@@ -2234,6 +2248,7 @@ void moveUpdateDroid(DROID *psDroid)
 			else
 			{
 				psDroid->sMove.Status = MOVEINACTIVE;
+				occupyTile(psDroid);
 			}
 			break;
 		}
@@ -2341,6 +2356,7 @@ void moveUpdateDroid(DROID *psDroid)
 		else
 		{
 			psDroid->sMove.Status = MOVEINACTIVE;
+			occupyTile(psDroid);
 		}
 		break;
 	case MOVETURNTOTARGET:
@@ -2392,6 +2408,11 @@ void moveUpdateDroid(DROID *psDroid)
 		checkLocalFeatures(psDroid);
 
 		triggerEventDroidMoved(psDroid, oldx, oldy);
+
+		if (psDroid->sMove.Status == MOVEINACTIVE) {
+			unoccupyTile(psDroid, oldx, oldy);
+			occupyTile(psDroid);
+		}
 	}
 
 	// See if it's got blocked
@@ -2429,6 +2450,7 @@ void moveUpdateDroid(DROID *psDroid)
 		else
 		{
 			psDroid->sMove.Status = MOVEINACTIVE;
+			occupyTile(psDroid);
 		}
 		objTrace(psDroid->id, "MOVETURNTOTARGET complete");
 	}

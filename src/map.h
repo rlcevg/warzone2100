@@ -30,6 +30,7 @@
 #include "terrain.h"
 #include "multiplay.h"
 #include "display.h"
+#include <set>
 
 /* The different types of terrain as far as the game is concerned */
 enum TYPE_OF_TERRAIN
@@ -93,6 +94,9 @@ struct GROUND_TYPE
 /* Information stored with each tile */
 struct MAPTILE
 {
+	MAPTILE();
+	~MAPTILE();
+
 	uint8_t			tileInfoBits;
 	PlayerMask              tileExploredBits;
 	PlayerMask              sensorBits;             ///< bit per player, who can see tile with sensor
@@ -111,6 +115,8 @@ struct MAPTILE
 	PlayerMask		jammerBits;             ///< bit per player, who is jamming tile
 	uint8_t                 sensors[MAX_PLAYERS];   ///< player sees this tile with this many radar sensors
 	uint8_t                 jammers[MAX_PLAYERS];   ///< player jams the tile with this many objects
+
+	std::set<BASE_OBJECT *>	units;	// Any movable unit standing still on the location
 };
 
 /* The size and contents of the map */
@@ -258,6 +264,12 @@ WZ_DECL_ALWAYS_INLINE static inline void auxClearBlocking(int x, int y, int stat
 static inline bool TileIsOccupied(const MAPTILE* tile)
 {
 	return tile->psObject != NULL;
+}
+
+/** Check if tile contains a unit. */
+static inline bool TileIsOccupiedByUnit(const MAPTILE* tile)
+{
+	return !tile->units.empty();
 }
 
 /** Check if tile contains a structure. Function is NOT thread-safe. */
@@ -552,5 +564,9 @@ WZ_DECL_ALWAYS_INLINE static inline bool hasSensorOnTile(MAPTILE *psTile, unsign
 
 void mapInit(void);
 void mapUpdate(void);
+
+void occupyTile(DROID *pDroid);
+void unoccupyTile(DROID *pDroid);
+void unoccupyTile(DROID *pDroid, int32_t x, int32_t y);		// x,y - world coords
 
 #endif // __INCLUDED_SRC_MAP_H__

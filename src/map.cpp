@@ -772,7 +772,8 @@ bool mapLoad(char *filename, bool preview)
 	ASSERT(psMapTiles == NULL, "Map has not been cleared before calling mapLoad()!");
 
 	/* Allocate the memory for the map */
-	psMapTiles = (MAPTILE *)calloc(width * height, sizeof(MAPTILE));
+//	psMapTiles = (MAPTILE *)calloc(width * height, sizeof(MAPTILE));
+	psMapTiles = new MAPTILE [width * height];
 	ASSERT(psMapTiles != NULL, "Out of memory" );
 
 	mapWidth = width;
@@ -807,13 +808,15 @@ bool mapLoad(char *filename, bool preview)
 		psMapTiles[i].texture = texture;
 		psMapTiles[i].height = height*ELEVATION_SCALE;
 
-		// Visibility stuff
-		memset(psMapTiles[i].watchers, 0, sizeof(psMapTiles[i].watchers));
-		memset(psMapTiles[i].sensors, 0, sizeof(psMapTiles[i].sensors));
-		memset(psMapTiles[i].jammers, 0, sizeof(psMapTiles[i].jammers));
-		psMapTiles[i].sensorBits = 0;
-		psMapTiles[i].jammerBits = 0;
-		psMapTiles[i].tileExploredBits = 0;
+//		// Visibility stuff
+//		memset(psMapTiles[i].watchers, 0, sizeof(psMapTiles[i].watchers));
+//		memset(psMapTiles[i].sensors, 0, sizeof(psMapTiles[i].sensors));
+//		memset(psMapTiles[i].jammers, 0, sizeof(psMapTiles[i].jammers));
+//		psMapTiles[i].sensorBits = 0;
+//		psMapTiles[i].jammerBits = 0;
+//		psMapTiles[i].tileExploredBits = 0;
+
+//		(psMapTiles[i]).pUnits = new std::set<BASE_OBJECT *>;
 	}
 
 	if (preview)
@@ -1024,7 +1027,8 @@ bool mapShutdown(void)
 		dangerDoneSemaphore = NULL;
 	}
 
-	free(psMapTiles);
+//	free(psMapTiles);
+	delete [] psMapTiles;
 	delete[] mapDecals;
 	free(psGroundTypes);
 	free(map);
@@ -1961,4 +1965,50 @@ void mapUpdate()
 		threatUpdate(lastDangerPlayer);
 		wzSemaphorePost(dangerSemaphore);
 	}
+}
+
+void occupyTile(DROID *pDroid)
+{
+	MAPTILE *pTile = worldTile(pDroid->pos.x, pDroid->pos.y);
+	pTile->units.insert(pDroid);
+}
+
+void unoccupyTile(DROID *pDroid)
+{
+	MAPTILE *pTile = worldTile(pDroid->pos.x, pDroid->pos.y);
+	pTile->units.erase(pDroid);
+}
+
+void unoccupyTile(DROID *pDroid, int32_t x, int32_t y)
+{
+	MAPTILE *pTile = worldTile(x, y);
+	pTile->units.erase(pDroid);
+}
+
+MAPTILE::MAPTILE(void)
+	: tileInfoBits(0)
+	, tileExploredBits(0)
+	, sensorBits(0)
+	, illumination(0)
+	, texture(0)
+	, height(0)
+	, level(0.0)
+	, psObject(NULL)
+	, limitedContinent(0)
+	, hoverContinent(0)
+	, ground(0)
+	, fireEndTime(0)
+	, waterLevel(0)
+	, jammerBits(0)
+{
+	memset(&colour, 0, sizeof(colour));
+	// Visibility stuff
+	memset(watchers, 0, sizeof(watchers));
+	memset(sensors, 0, sizeof(sensors));
+	memset(jammers, 0, sizeof(jammers));
+}
+
+MAPTILE::~MAPTILE()
+{
+	units.clear();
 }

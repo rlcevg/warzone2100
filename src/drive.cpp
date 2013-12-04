@@ -277,6 +277,7 @@ static void ChangeDriver(void)
 			{
 				ASSERT((psDroid->droidType != DROID_TRANSPORTER && psDroid->droidType != DROID_SUPERTRANSPORTER), "Tried to control a transporter" );
 				psDroid->sMove.Status = MOVEINACTIVE;
+				occupyTile(psDroid);
 			}
 		}
 	}
@@ -299,6 +300,7 @@ void StopDriverMode(void)
 			{
 				ASSERT((psDroid->droidType != DROID_TRANSPORTER && psDroid->droidType != DROID_SUPERTRANSPORTER), "Tried to control a transporter");
 				psDroid->sMove.Status = MOVEINACTIVE;
+				occupyTile(psDroid);
 			}
 		}
 	}
@@ -484,6 +486,7 @@ static void driveMoveFollower(DROID *psDroid)
 	if(DoFollowRangeCheck) {
 		if(driveInDriverRange(psDroid)) {
 			psDroid->sMove.Status = MOVEINACTIVE;
+			occupyTile(psDroid);
 		} else {
 			AllInRange = false;
 		}

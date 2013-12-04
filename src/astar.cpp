@@ -619,7 +619,7 @@ void fpathSetBlockingMap(PATHJOB *psJob)
 		for (int y = 0; y < mapHeight; ++y)
 			for (int x = 0; x < mapWidth; ++x)
 		{
-			map[x + y*mapWidth] = fpathBaseBlockingTile(x, y, type.propulsion, type.owner, type.moveType);
+			map[x + y*mapWidth] = fpathBaseBlockingTile(x, y, type.propulsion, type.owner, type.moveType) || TileIsOccupiedByUnit(mapTile(x, y));
 			checksumMap ^= map[x + y*mapWidth]*(factor = 3*factor + 1);
 		}
 		if (!isHumanPlayer(type.owner) && type.moveType == FMT_MOVE)
