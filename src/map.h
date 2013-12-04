@@ -93,6 +93,9 @@ struct GROUND_TYPE
 /* Information stored with each tile */
 struct MAPTILE
 {
+	MAPTILE();
+	~MAPTILE();
+
 	uint8_t			tileInfoBits;
 	PlayerMask              tileExploredBits;
 	PlayerMask              sensorBits;             ///< bit per player, who can see tile with sensor
@@ -111,6 +114,11 @@ struct MAPTILE
 	PlayerMask		jammerBits;             ///< bit per player, who is jamming tile
 	uint8_t                 sensors[MAX_PLAYERS];   ///< player sees this tile with this many radar sensors
 	uint8_t                 jammers[MAX_PLAYERS];   ///< player jams the tile with this many objects
+
+	typedef std::list<BASE_OBJECT *>	UnitList;
+	UnitList		units;	// Any movable unit standing still on the location
+
+	bool isFriendlyOccupied(int player);
 };
 
 /* The size and contents of the map */

@@ -84,6 +84,7 @@ struct DROID_TEMPLATE : public BASE_STATS
 
 class DROID_GROUP;
 struct STRUCTURE;
+class MAPTILE;
 
 struct DROID : public BASE_OBJECT
 {
@@ -165,6 +166,11 @@ struct DROID : public BASE_OBJECT
 	/* anim data */
 	ANIM_OBJECT     *psCurAnim;
 	SDWORD          iAudioID;
+
+	MAPTILE			*psTile;
+
+	void occupyTile(void);
+	void unoccupyTile(void);
 };
 
 #endif // __INCLUDED_DROIDDEF_H__

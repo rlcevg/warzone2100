@@ -1779,6 +1779,8 @@ void unloadTransporter(DROID *psTransporter, UDWORD x, UDWORD y, bool goingHome)
 				//swap the droid and map pointers
 				swapMissionPointers();
 			}
+
+			psDroid->occupyTile();
 		}
 
 		/* trigger script callback detailing group about to disembark */

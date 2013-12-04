@@ -112,7 +112,7 @@ struct PathBlockingMap
 	}
 
 	PathBlockingType type;
-	std::vector<bool> map;
+	std::vector<uint8_t> map;
 	std::vector<bool> dangerMap;	// using threatBits
 };
 
@@ -141,7 +141,7 @@ struct PathfindContext
 			return false;  // The path is actually blocked here by a structure, but ignore it since it's where we want to go (or where we came from).
 		}
 		// Not sure whether the out-of-bounds check is needed, can only happen if pathfinding is started on a blocking tile (or off the map).
-		return x < 0 || y < 0 || x >= mapWidth || y >= mapHeight || blockingMap->map[x + y*mapWidth];
+		return x < 0 || y < 0 || x >= mapWidth || y >= mapHeight || (blockingMap->map[x + y*mapWidth] == BLOCKED_COSTFACTOR);
 	}
 	bool isDangerous(int x, int y) const
 	{
@@ -255,7 +255,7 @@ static inline void fpathNewNode(PathfindContext &context, PathCoord dest, PathCo
 
 	// Create the node.
 	PathNode node;
-	unsigned costFactor = context.isDangerous(pos.x, pos.y) ? 5 : 1;
+	unsigned costFactor = context.isDangerous(pos.x, pos.y) ? 5 : context.blockingMap->map[pos.x + pos.y * mapWidth];
 	node.p = pos;
 	node.dist = prevDist + fpathEstimate(prevPos, pos)*costFactor;
 	node.est = node.dist + fpathGoodEstimate(pos, dest);
@@ -613,13 +613,13 @@ void fpathSetBlockingMap(PATHJOB *psJob)
 
 		// i now points to an empty map with no data. Fill the map.
 		i->type = type;
-		std::vector<bool> &map = i->map;
+		std::vector<uint8_t> &map = i->map;
 		map.resize(mapWidth*mapHeight);
 		uint32_t checksumMap = 0, checksumDangerMap = 0, factor = 0;
 		for (int y = 0; y < mapHeight; ++y)
 			for (int x = 0; x < mapWidth; ++x)
 		{
-			map[x + y*mapWidth] = fpathBaseBlockingTile(x, y, type.propulsion, type.owner, type.moveType);
+			map[x + y*mapWidth] = fpathCalcTileCost(x, y, type.propulsion, type.owner, type.moveType);
 			checksumMap ^= map[x + y*mapWidth]*(factor = 3*factor + 1);
 		}
 		if (!isHumanPlayer(type.owner) && type.moveType == FMT_MOVE)

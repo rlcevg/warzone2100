@@ -562,6 +562,8 @@
 /* Begin PBXProject section */
 		438C94C9149BD084001BAF3A /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = 438C94CC149BD084001BAF3A /* Build configuration list for PBXProject "MapUtilities" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;

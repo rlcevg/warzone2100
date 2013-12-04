@@ -278,6 +278,28 @@ bool fpathBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion)
 	return fpathBaseBlockingTile(x, y, propulsion, 0, FMT_BLOCK);  // with FMT_BLOCK, it is irrelevant which player is passed in
 }
 
+// Calculate cost factor of moving through tile
+uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType)
+{
+	if (fpathBaseBlockingTile(x, y, propulsion, player, moveType))
+	{
+		return BLOCKED_COSTFACTOR;
+	}
+
+	uint8_t costFactor = mapTile(x, y)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : UNOCCUPIED_COSTFACTOR;
+	if (x < 1 || y < 1 || x >= mapWidth - 1 || y >= mapHeight - 1)
+	{
+		return costFactor;
+	}
+
+	// We do not want to cut corners
+	uint8_t costFactor1 = mapTile(x + 1, y)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
+	uint8_t costFactor2 = mapTile(x, y + 1)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
+	uint8_t costFactor3 = mapTile(x - 1, y)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
+	uint8_t costFactor4 = mapTile(x, y - 1)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
+	return (costFactor1 + costFactor2 + costFactor3 + costFactor4) / 4 + costFactor;
+}
+
 
 // Returns the closest non-blocking tile to pos, or returns pos if no non-blocking tiles are present within a 2 tile distance.
 static Position findNonblockingPosition(Position pos, PROPULSION_TYPE propulsion, int player = 0, FPATH_MOVETYPE moveType = FMT_BLOCK)
