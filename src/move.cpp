@@ -155,7 +155,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 		fpathSetDirectRoute(psDroid, x, y);
 		psDroid->sMove.Status = MOVENAVIGATE;
 		psDroid->sMove.pathIndex = 0;
-		unoccupyTile(psDroid);
+		psDroid->unoccupyTile();
 		return true;
 	}
 	// NOTE: While Vtols can fly, then can't go through things, like the transporter.
@@ -183,7 +183,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 
 		psDroid->sMove.Status = MOVENAVIGATE;
 		psDroid->sMove.pathIndex = 0;
-		unoccupyTile(psDroid);
+		psDroid->unoccupyTile();
 	}
 	else if (retVal == FPR_WAIT)
 	{
@@ -197,7 +197,7 @@ static bool moveDroidToBase(DROID *psDroid, UDWORD x, UDWORD y, bool bFormation,
 		objTrace(psDroid->id, "Path to (%d, %d) failed for droid %d", (int)x, (int)y, (int)psDroid->id);
 		psDroid->sMove.Status = MOVEINACTIVE;
 		actionDroid(psDroid, DACTION_SULK);
-		occupyTile(psDroid);
+		psDroid->occupyTile();
 		return(false);
 	}
 
@@ -234,7 +234,7 @@ void moveDroidToDirect(DROID* psDroid, UDWORD x, UDWORD y)
 	fpathSetDirectRoute(psDroid, x, y);
 	psDroid->sMove.Status = MOVENAVIGATE;
 	psDroid->sMove.pathIndex = 0;
-	unoccupyTile(psDroid);
+	psDroid->unoccupyTile();
 }
 
 
@@ -362,7 +362,7 @@ static void moveShuffleDroid(DROID *psDroid, Vector2i s)
 	psDroid->sMove.target = tar;
 	psDroid->sMove.numPoints = 0;
 	psDroid->sMove.pathIndex = 0;
-	unoccupyTile(psDroid);
+	psDroid->unoccupyTile();
 
 	CHECK_DROID(psDroid);
 }
@@ -387,7 +387,7 @@ void moveStopDroid(DROID *psDroid)
 	else
 	{
 		psDroid->sMove.Status = MOVEINACTIVE;
-		occupyTile(psDroid);
+		psDroid->occupyTile();
 	}
 }
 
@@ -402,7 +402,7 @@ void moveReallyStopDroid(DROID *psDroid)
 	psDroid->sMove.Status = MOVEINACTIVE;
 	psDroid->sMove.speed = 0;
 
-	occupyTile(psDroid);
+	psDroid->occupyTile();
 }
 
 
@@ -826,7 +826,7 @@ static void moveCalcBlockingSlide(DROID *psDroid, int32_t *pmx, int32_t *pmy, ui
 	{
 		objTrace(psDroid->id, "Was shuffling, now stopped");
 		psDroid->sMove.Status = MOVEINACTIVE;
-		occupyTile(psDroid);
+		psDroid->occupyTile();
 	}
 
 	// note the bump time and position if necessary
@@ -1922,7 +1922,7 @@ static void moveDescending( DROID *psDroid )
 
 		/* reset move state */
 		psDroid->sMove.Status = MOVEINACTIVE;
-		occupyTile(psDroid);
+		psDroid->occupyTile();
 
 		/* conform to terrain */
 		updateDroidOrientation(psDroid);
@@ -2219,7 +2219,7 @@ void moveUpdateDroid(DROID *psDroid)
 			else
 			{
 				psDroid->sMove.Status = MOVEINACTIVE;
-				occupyTile(psDroid);
+				psDroid->occupyTile();
 			}
 		}
 		else
@@ -2250,7 +2250,7 @@ void moveUpdateDroid(DROID *psDroid)
 			else
 			{
 				psDroid->sMove.Status = MOVEINACTIVE;
-				occupyTile(psDroid);
+				psDroid->occupyTile();
 			}
 			break;
 		}
@@ -2358,7 +2358,7 @@ void moveUpdateDroid(DROID *psDroid)
 		else
 		{
 			psDroid->sMove.Status = MOVEINACTIVE;
-			occupyTile(psDroid);
+			psDroid->occupyTile();
 		}
 		break;
 	case MOVETURNTOTARGET:
@@ -2412,8 +2412,7 @@ void moveUpdateDroid(DROID *psDroid)
 		triggerEventDroidMoved(psDroid, oldx, oldy);
 
 		if (psDroid->sMove.Status == MOVEINACTIVE) {
-			unoccupyTile(psDroid, oldx, oldy);
-			occupyTile(psDroid);
+			psDroid->occupyTile();	// unoccupyTile() is within occupyTile()
 		}
 	}
 
@@ -2452,7 +2451,7 @@ void moveUpdateDroid(DROID *psDroid)
 		else
 		{
 			psDroid->sMove.Status = MOVEINACTIVE;
-			occupyTile(psDroid);
+			psDroid->occupyTile();
 		}
 		objTrace(psDroid->id, "MOVETURNTOTARGET complete");
 	}

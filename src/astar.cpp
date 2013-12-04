@@ -141,7 +141,7 @@ struct PathfindContext
 			return false;  // The path is actually blocked here by a structure, but ignore it since it's where we want to go (or where we came from).
 		}
 		// Not sure whether the out-of-bounds check is needed, can only happen if pathfinding is started on a blocking tile (or off the map).
-		return x < 0 || y < 0 || x >= mapWidth || y >= mapHeight || blockingMap->map[x + y*mapWidth];
+		return x < 0 || y < 0 || x >= mapWidth || y >= mapHeight || (blockingMap->map[x + y*mapWidth] == BLOCKED_COSTFACTOR);
 	}
 	bool isDangerous(int x, int y) const
 	{
@@ -255,7 +255,7 @@ static inline void fpathNewNode(PathfindContext &context, PathCoord dest, PathCo
 
 	// Create the node.
 	PathNode node;
-	unsigned costFactor = context.isDangerous(pos.x, pos.y) ? 5 : 1;
+	unsigned costFactor = context.isDangerous(pos.x, pos.y) ? 5 : context.blockingMap->map[pos.x + pos.y * mapWidth];
 	node.p = pos;
 	node.dist = prevDist + fpathEstimate(prevPos, pos)*costFactor;
 	node.est = node.dist + fpathGoodEstimate(pos, dest);

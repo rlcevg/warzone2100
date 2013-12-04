@@ -32,6 +32,10 @@
  *  @{
  */
 
+#define BLOCKED_COSTFACTOR		0xFF
+#define OCCUPIED_COSTFACTOR		8
+#define UNOCCUPIED_COSTFACTOR	1
+
 enum FPATH_MOVETYPE
 {
 	FMT_MOVE,		///< Move around all obstacles
@@ -99,7 +103,7 @@ bool fpathBaseBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int p
 
 static inline bool fpathBlockingTile(Vector2i tile, PROPULSION_TYPE propulsion) { return fpathBlockingTile(tile.x, tile.y, propulsion); }
 
-/** Calculate additional cost of moving over tile */
+/** Calculate cost factor of moving through tile */
 uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType);
 
 /** Set a direct path to position.

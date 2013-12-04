@@ -1052,15 +1052,15 @@ static void drawTiles(iView *player)
 	pie_TRANSLATE(-player->p.x, 0, player->p.z);
 
 	// and draw it
-	pie_SetRendMode(REND_OPAQUE);
-	pie_SetTexturePage(TEXPAGE_NONE);
-	glColor4ubv(WZCOL_UNIT_SELECT_BOX.vector);
-	glBegin(GL_QUADS);
-	glVertex3f(6793, 230, -27084);
-	glVertex3f(7793, 230, -27084);
-	glVertex3f(7793, 230, -28084);
-	glVertex3f(6793, 230, -28084);
-	glEnd();
+//	pie_SetRendMode(REND_OPAQUE);
+//	pie_SetTexturePage(TEXPAGE_NONE);
+//	glColor4ubv(WZCOL_UNIT_SELECT_BOX.vector);
+//	glBegin(GL_QUADS);
+//	glVertex3f(6793, 230, -27084);
+//	glVertex3f(7793, 230, -27084);
+//	glVertex3f(7793, 230, -28084);
+//	glVertex3f(6793, 230, -28084);
+//	glEnd();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 //	glLineWidth(4.0);
 	drawTerrain();

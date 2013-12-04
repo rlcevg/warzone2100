@@ -4370,19 +4370,19 @@ static bool loadSaveDroid(const char *pFileName, DROID **ppsCurrentDroidLists)
 			{
 				psDroid->sMove.Status = MOVENAVIGATE;
 				psDroid->sMove.pathIndex = 0;
-//				unoccupyTile(psDroid);
+//				psDroid->unoccupyTile();
 			}
 			else // if (retVal == FPR_FAILED)
 			{
 				psDroid->sMove.Status = MOVEINACTIVE;
 				actionDroid(psDroid, DACTION_SULK);
-				occupyTile(psDroid);
+				psDroid->occupyTile();
 			}
 			ASSERT(dr != FPR_WAIT, " ");
 		}
 		else if (psDroid->sMove.Status == MOVEINACTIVE)
 		{
-			occupyTile(psDroid);
+			psDroid->occupyTile();
 		}
 
 		// HACK!!

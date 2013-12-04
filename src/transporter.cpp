@@ -955,6 +955,8 @@ void transporterRemoveDroid(DROID *psTransport, DROID *psDroid, QUEUE_MODE mode)
 		//make sure the button isn't flashing
 		stopMissionButtonFlash(IDTRANS_LAUNCH);
 	}
+
+	psDroid->occupyTile();
 }
 
 /*adds a droid to the current transporter via the interface*/

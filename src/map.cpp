@@ -1967,24 +1967,6 @@ void mapUpdate()
 	}
 }
 
-void occupyTile(DROID *pDroid)
-{
-	MAPTILE *pTile = worldTile(pDroid->pos.x, pDroid->pos.y);
-	pTile->units.insert(pDroid);
-}
-
-void unoccupyTile(DROID *pDroid)
-{
-	MAPTILE *pTile = worldTile(pDroid->pos.x, pDroid->pos.y);
-	pTile->units.erase(pDroid);
-}
-
-void unoccupyTile(DROID *pDroid, int32_t x, int32_t y)
-{
-	MAPTILE *pTile = worldTile(x, y);
-	pTile->units.erase(pDroid);
-}
-
 MAPTILE::MAPTILE(void)
 	: tileInfoBits(0)
 	, tileExploredBits(0)
@@ -2024,17 +2006,4 @@ bool MAPTILE::isFriendlyOccupied(int player)
 		}
 	}
 	return false;
-}
-
-uint8_t MAPTILE::occupiedCost(int player)
-{
-	uint8_t cost = 0;
-	for (UnitList::iterator i = units.begin(); i != units.end(); ++i)
-	{
-		if (aiCheckAlliances((*i)->player, player))
-		{
-			cost++;
-		}
-	}
-	return cost;
 }

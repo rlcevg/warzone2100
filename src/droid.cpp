@@ -352,6 +352,7 @@ DROID::DROID(uint32_t id, unsigned player)
 	, action(DACTION_NONE)
 	, actionPos(0, 0)
 	, psCurAnim(NULL)
+	, psTile(NULL)
 {
 	memset(aName, 0, sizeof(aName));
 	memset(asBits, 0, sizeof(asBits));
@@ -425,10 +426,39 @@ DROID::~DROID()
 		psDroid->psGroup->remove(psDroid);
 	}
 
+	psDroid->unoccupyTile();
+
 	// remove the droid from the cluster system
 	clustRemoveObject((BASE_OBJECT *)psDroid);
 
 	free(sMove.asPath);
+}
+
+void DROID::occupyTile(void)
+{
+	MAPTILE *tile = worldTile(pos.x, pos.y);
+
+	if (tile == psTile)
+	{
+		return;
+	}
+
+	if (psTile)
+	{
+		psTile->units.remove(this);
+	}
+
+	tile->units.push_back(this);
+	psTile = tile;
+}
+
+void DROID::unoccupyTile(void)
+{
+	if (psTile)
+	{
+		psTile->units.remove(this);
+		psTile = NULL;
+	}
 }
 
 
@@ -699,6 +729,8 @@ bool droidRemove(DROID *psDroid, DROID *pList[MAX_PLAYERS])
 	{
 		intRefreshScreen();
 	}
+
+	psDroid->unoccupyTile();
 
 	return true;
 }

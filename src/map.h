@@ -30,7 +30,6 @@
 #include "terrain.h"
 #include "multiplay.h"
 #include "display.h"
-#include <set>
 
 /* The different types of terrain as far as the game is concerned */
 enum TYPE_OF_TERRAIN
@@ -116,11 +115,10 @@ struct MAPTILE
 	uint8_t                 sensors[MAX_PLAYERS];   ///< player sees this tile with this many radar sensors
 	uint8_t                 jammers[MAX_PLAYERS];   ///< player jams the tile with this many objects
 
-	typedef std::set<BASE_OBJECT *>	UnitList;
+	typedef std::list<BASE_OBJECT *>	UnitList;
 	UnitList		units;	// Any movable unit standing still on the location
 
 	bool isFriendlyOccupied(int player);
-	uint8_t occupiedCost(int player);
 };
 
 /* The size and contents of the map */
@@ -562,9 +560,5 @@ WZ_DECL_ALWAYS_INLINE static inline bool hasSensorOnTile(MAPTILE *psTile, unsign
 
 void mapInit(void);
 void mapUpdate(void);
-
-void occupyTile(DROID *pDroid);
-void unoccupyTile(DROID *pDroid);
-void unoccupyTile(DROID *pDroid, int32_t x, int32_t y);		// x,y - world coords
 
 #endif // __INCLUDED_SRC_MAP_H__
