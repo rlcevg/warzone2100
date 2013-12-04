@@ -148,7 +148,7 @@ static SDWORD	rangeCenterX,rangeCenterY,rangeRadius;
 static bool	bDrawProximitys = true;
 bool	godMode;
 bool	showGateways = false;
-bool	showPath = true;
+bool	showPath = false;
 
 // Skybox data
 static float wind = 0.0f;
@@ -486,22 +486,6 @@ static void showDroidPaths(void)
 
 				effectGiveAuxVar(80);
 				addEffect(&pos, EFFECT_EXPLOSION, EXPLOSION_TYPE_LASER, false, NULL, 0);
-			}
-		}
-	}
-
-	for (int x = 0; x < mapWidth; ++x)
-	{
-		for (int y = 0; y < mapHeight; ++y)
-		{
-			if (mapTile(x, y)->isFriendlyOccupied(selectedPlayer))
-			{
-				Vector3i pos;
-				pos.x = world_coord(x) + TILE_UNITS / 2;
-				pos.z = world_coord(y) + TILE_UNITS / 2;
-				pos.y = map_Height(pos.x, pos.z) + 32;
-				effectGiveAuxVar(80);
-				addEffect(&pos, EFFECT_FIREWORK, EXPLOSION_TYPE_TESLA, false, NULL, 0);
 			}
 		}
 	}
@@ -1052,20 +1036,7 @@ static void drawTiles(iView *player)
 	pie_TRANSLATE(-player->p.x, 0, player->p.z);
 
 	// and draw it
-//	pie_SetRendMode(REND_OPAQUE);
-//	pie_SetTexturePage(TEXPAGE_NONE);
-//	glColor4ubv(WZCOL_UNIT_SELECT_BOX.vector);
-//	glBegin(GL_QUADS);
-//	glVertex3f(6793, 230, -27084);
-//	glVertex3f(7793, 230, -27084);
-//	glVertex3f(7793, 230, -28084);
-//	glVertex3f(6793, 230, -28084);
-//	glEnd();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//	glLineWidth(4.0);
 	drawTerrain();
-//	glLineWidth(1.0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// and to the warzone modelview transform
 	pie_MatEnd();

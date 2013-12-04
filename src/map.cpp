@@ -772,7 +772,6 @@ bool mapLoad(char *filename, bool preview)
 	ASSERT(psMapTiles == NULL, "Map has not been cleared before calling mapLoad()!");
 
 	/* Allocate the memory for the map */
-//	psMapTiles = (MAPTILE *)calloc(width * height, sizeof(MAPTILE));
 	psMapTiles = new MAPTILE [width * height];
 	ASSERT(psMapTiles != NULL, "Out of memory" );
 
@@ -807,16 +806,6 @@ bool mapLoad(char *filename, bool preview)
 
 		psMapTiles[i].texture = texture;
 		psMapTiles[i].height = height*ELEVATION_SCALE;
-
-//		// Visibility stuff
-//		memset(psMapTiles[i].watchers, 0, sizeof(psMapTiles[i].watchers));
-//		memset(psMapTiles[i].sensors, 0, sizeof(psMapTiles[i].sensors));
-//		memset(psMapTiles[i].jammers, 0, sizeof(psMapTiles[i].jammers));
-//		psMapTiles[i].sensorBits = 0;
-//		psMapTiles[i].jammerBits = 0;
-//		psMapTiles[i].tileExploredBits = 0;
-
-//		(psMapTiles[i]).pUnits = new std::set<BASE_OBJECT *>;
 	}
 
 	if (preview)
@@ -1027,7 +1016,6 @@ bool mapShutdown(void)
 		dangerDoneSemaphore = NULL;
 	}
 
-//	free(psMapTiles);
 	delete [] psMapTiles;
 	delete[] mapDecals;
 	free(psGroundTypes);

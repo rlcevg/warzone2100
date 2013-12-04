@@ -4370,7 +4370,6 @@ static bool loadSaveDroid(const char *pFileName, DROID **ppsCurrentDroidLists)
 			{
 				psDroid->sMove.Status = MOVENAVIGATE;
 				psDroid->sMove.pathIndex = 0;
-//				psDroid->unoccupyTile();
 			}
 			else // if (retVal == FPR_FAILED)
 			{
