@@ -99,6 +99,9 @@ bool fpathBaseBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int p
 
 static inline bool fpathBlockingTile(Vector2i tile, PROPULSION_TYPE propulsion) { return fpathBlockingTile(tile.x, tile.y, propulsion); }
 
+/** Calculate additional cost of moving over tile */
+uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType);
+
 /** Set a direct path to position.
  *
  *  Plan a path from @c psDroid's current position to given position without

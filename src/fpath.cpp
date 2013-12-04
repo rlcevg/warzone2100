@@ -264,12 +264,7 @@ bool fpathBaseBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int m
 	}
 
 	// the MAX hack below is because blockTile() range does not include player-specific versions...
-//	return (blockTile(x, y, MAX(0, mapIndex - MAX_PLAYERS)) & unitbits) != 0;  // finally check if move is blocked by propulsion related factors
-	bool blocked = (blockTile(x, y, MAX(0, mapIndex - MAX_PLAYERS)) & unitbits) != 0;  // finally check if move is blocked by propulsion related factors
-	if (moveType == FMT_MOVE) {
-		blocked |= TileIsOccupiedByUnit(mapTile(x, y));
-	}
-	return blocked;
+	return (blockTile(x, y, MAX(0, mapIndex - MAX_PLAYERS)) & unitbits) != 0;  // finally check if move is blocked by propulsion related factors
 }
 
 bool fpathDroidBlockingTile(DROID *psDroid, int x, int y, FPATH_MOVETYPE moveType)
@@ -281,6 +276,14 @@ bool fpathDroidBlockingTile(DROID *psDroid, int x, int y, FPATH_MOVETYPE moveTyp
 bool fpathBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion)
 {
 	return fpathBaseBlockingTile(x, y, propulsion, 0, FMT_BLOCK);  // with FMT_BLOCK, it is irrelevant which player is passed in
+}
+
+#define BLOCKED_COST	0xFF
+
+// Calculate additional cost of moving over tile
+uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType)
+{
+	return fpathBaseBlockingTile(x, y, propulsion, player, moveType) ? BLOCKED_COST : mapTile(x, y)->occupiedCost(player);
 }
 
 

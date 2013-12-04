@@ -116,7 +116,11 @@ struct MAPTILE
 	uint8_t                 sensors[MAX_PLAYERS];   ///< player sees this tile with this many radar sensors
 	uint8_t                 jammers[MAX_PLAYERS];   ///< player jams the tile with this many objects
 
-	std::set<BASE_OBJECT *>	units;	// Any movable unit standing still on the location
+	typedef std::set<BASE_OBJECT *>	UnitList;
+	UnitList		units;	// Any movable unit standing still on the location
+
+	bool isFriendlyOccupied(int player);
+	uint8_t occupiedCost(int player);
 };
 
 /* The size and contents of the map */
@@ -264,12 +268,6 @@ WZ_DECL_ALWAYS_INLINE static inline void auxClearBlocking(int x, int y, int stat
 static inline bool TileIsOccupied(const MAPTILE* tile)
 {
 	return tile->psObject != NULL;
-}
-
-/** Check if tile contains a unit. */
-static inline bool TileIsOccupiedByUnit(const MAPTILE* tile)
-{
-	return !tile->units.empty();
 }
 
 /** Check if tile contains a structure. Function is NOT thread-safe. */

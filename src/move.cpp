@@ -468,6 +468,7 @@ struct BLOCKING_CALLBACK_DATA
 	bool blocking;
 	Vector2i src;
 	Vector2i dst;
+	int player;
 };
 
 static bool moveBlockingTileCallback(Vector2i pos, int32_t dist, void *data_)
@@ -475,7 +476,7 @@ static bool moveBlockingTileCallback(Vector2i pos, int32_t dist, void *data_)
 	BLOCKING_CALLBACK_DATA *data = (BLOCKING_CALLBACK_DATA *)data_;
 	int32_t mapX = map_coord(pos.x);
 	int32_t mapY = map_coord(pos.y);
-	bool blockingTile = fpathBlockingTile(mapX, mapY, data->propulsionType) || TileIsOccupiedByUnit(mapTile(mapX, mapY));
+	bool blockingTile = fpathBlockingTile(mapX, mapY, data->propulsionType) || mapTile(mapX, mapY)->isFriendlyOccupied(data->player);
 	data->blocking |= pos != data->src && pos != data->dst && blockingTile;
 	return !data->blocking;
 }
@@ -492,6 +493,7 @@ static int32_t moveDirectPathToWaypoint(DROID *psDroid, unsigned positionIndex)
 	data.blocking = false;
 	data.src = src;
 	data.dst = dst;
+	data.player = psDroid->player;
 	rayCast(src, dst, &moveBlockingTileCallback, &data);
 	return data.blocking? -1 - dist : dist;
 }

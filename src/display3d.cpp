@@ -490,9 +490,12 @@ static void showDroidPaths(void)
 		}
 	}
 
-	for (int x = 0; x < mapWidth; ++x) {
-		for (int y = 0; y < mapHeight; ++y) {
-			if (TileIsOccupiedByUnit(mapTile(x, y))) {
+	for (int x = 0; x < mapWidth; ++x)
+	{
+		for (int y = 0; y < mapHeight; ++y)
+		{
+			if (mapTile(x, y)->isFriendlyOccupied(selectedPlayer))
+			{
 				Vector3i pos;
 				pos.x = world_coord(x) + TILE_UNITS / 2;
 				pos.z = world_coord(y) + TILE_UNITS / 2;

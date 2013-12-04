@@ -112,7 +112,7 @@ struct PathBlockingMap
 	}
 
 	PathBlockingType type;
-	std::vector<bool> map;
+	std::vector<uint8_t> map;
 	std::vector<bool> dangerMap;	// using threatBits
 };
 
@@ -613,13 +613,13 @@ void fpathSetBlockingMap(PATHJOB *psJob)
 
 		// i now points to an empty map with no data. Fill the map.
 		i->type = type;
-		std::vector<bool> &map = i->map;
+		std::vector<uint8_t> &map = i->map;
 		map.resize(mapWidth*mapHeight);
 		uint32_t checksumMap = 0, checksumDangerMap = 0, factor = 0;
 		for (int y = 0; y < mapHeight; ++y)
 			for (int x = 0; x < mapWidth; ++x)
 		{
-			map[x + y*mapWidth] = fpathBaseBlockingTile(x, y, type.propulsion, type.owner, type.moveType) || TileIsOccupiedByUnit(mapTile(x, y));
+			map[x + y*mapWidth] = fpathCalcTileCost(x, y, type.propulsion, type.owner, type.moveType);
 			checksumMap ^= map[x + y*mapWidth]*(factor = 3*factor + 1);
 		}
 		if (!isHumanPlayer(type.owner) && type.moveType == FMT_MOVE)

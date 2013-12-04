@@ -2012,3 +2012,29 @@ MAPTILE::~MAPTILE()
 {
 	units.clear();
 }
+
+bool MAPTILE::isFriendlyOccupied(int player)
+{
+	for (UnitList::iterator i = units.begin(); i != units.end(); ++i)
+	{
+		// TODO: Check if droid spotted himself
+		if (aiCheckAlliances((*i)->player, player))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+uint8_t MAPTILE::occupiedCost(int player)
+{
+	uint8_t cost = 0;
+	for (UnitList::iterator i = units.begin(); i != units.end(); ++i)
+	{
+		if (aiCheckAlliances((*i)->player, player))
+		{
+			cost++;
+		}
+	}
+	return cost;
+}
