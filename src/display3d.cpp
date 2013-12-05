@@ -148,7 +148,11 @@ static SDWORD	rangeCenterX,rangeCenterY,rangeRadius;
 static bool	bDrawProximitys = true;
 bool	godMode;
 bool	showGateways = false;
+#ifdef DEBUG
+bool	showPath = true;
+#else
 bool	showPath = false;
+#endif
 
 // Skybox data
 static float wind = 0.0f;
@@ -486,6 +490,22 @@ static void showDroidPaths(void)
 
 				effectGiveAuxVar(80);
 				addEffect(&pos, EFFECT_EXPLOSION, EXPLOSION_TYPE_LASER, false, NULL, 0);
+			}
+		}
+		else
+		{
+			if (psDroid->psTile)
+			{
+				Vector3i pos;
+				map_coord(psDroid->pos.x);
+				int32_t mapX = map_coord(psDroid->pos.x);
+				int32_t mapY = map_coord(psDroid->pos.y);
+				pos.x = world_coord(mapX) + TILE_UNITS / 2;
+				pos.z = world_coord(mapY) + TILE_UNITS / 2;
+				pos.y = map_Height(pos.x, pos.z) + 16;
+				effectGiveAuxVar(80);
+				addEffect(&pos, (mapTile(mapX, mapY) == psDroid->psTile) ? EFFECT_FIREWORK : EFFECT_EXPLOSION,  EXPLOSION_TYPE_TESLA, false, NULL, 0);
+//				ASSERT(mapTile(mapX, mapY) == psDroid->psTile, "Wrong occupied tile");
 			}
 		}
 	}
@@ -1036,7 +1056,15 @@ static void drawTiles(iView *player)
 	pie_TRANSLATE(-player->p.x, 0, player->p.z);
 
 	// and draw it
+#ifdef DEBUG
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glLineWidth(2.0);
+#endif
 	drawTerrain();
+#ifdef DEBUG
+	glLineWidth(1.0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 
 	// and to the warzone modelview transform
 	pie_MatEnd();

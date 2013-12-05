@@ -116,7 +116,7 @@ struct MAPTILE
 	uint8_t                 jammers[MAX_PLAYERS];   ///< player jams the tile with this many objects
 
 	typedef std::list<BASE_OBJECT *>	UnitList;
-	UnitList		units;	// Any movable unit standing still on the location
+	UnitList		units;	// List of any movable units standing still on the location
 
 	bool isFriendlyOccupied(int player);
 };

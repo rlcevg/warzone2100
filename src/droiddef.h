@@ -84,7 +84,7 @@ struct DROID_TEMPLATE : public BASE_STATS
 
 class DROID_GROUP;
 struct STRUCTURE;
-class MAPTILE;
+struct MAPTILE;
 
 struct DROID : public BASE_OBJECT
 {
