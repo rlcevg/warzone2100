@@ -286,10 +286,13 @@ uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int pl
 		return BLOCKED_COSTFACTOR;
 	}
 
-	uint8_t costFactor = mapTile(x, y)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : UNOCCUPIED_COSTFACTOR;
-	if (x < 1 || y < 1 || x >= mapWidth - 1 || y >= mapHeight - 1)
+	if (mapTile(x, y)->isFriendlyOccupied(player))
 	{
-		return costFactor;
+		return OCCUPIED_COSTFACTOR;
+	}
+	else if (x < 1 || y < 1 || x >= mapWidth - 1 || y >= mapHeight - 1)
+	{
+		return UNOCCUPIED_COSTFACTOR;
 	}
 
 	// We do not want to cut corners
@@ -297,7 +300,7 @@ uint8_t fpathCalcTileCost(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int pl
 	uint8_t costFactor2 = mapTile(x, y + 1)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
 	uint8_t costFactor3 = mapTile(x - 1, y)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
 	uint8_t costFactor4 = mapTile(x, y - 1)->isFriendlyOccupied(player) ? OCCUPIED_COSTFACTOR : 0;
-	return (costFactor1 + costFactor2 + costFactor3 + costFactor4) / 4 + costFactor;
+	return (costFactor1 + costFactor2 + costFactor3 + costFactor4) / 4 + UNOCCUPIED_COSTFACTOR;
 }
 
 

@@ -3473,6 +3473,7 @@ void droidSetPosition(DROID *psDroid, int x, int y)
 	psDroid->pos.z = map_Height(psDroid->pos.x, psDroid->pos.y);
 	initDroidMovement(psDroid);
 	visTilesUpdate((BASE_OBJECT *)psDroid);
+	psDroid->occupyTile();
 }
 
 /** Check validity of a droid. Crash hard if it fails. */
