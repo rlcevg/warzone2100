@@ -319,7 +319,9 @@ bool ParseCommandLineEarly(int argc, const char** argv)
 
 		if (iOption == POPT_ERROR_BADOPT)
 		{
-			qFatal("Unrecognized option: %s", poptBadOption(poptCon, 0));
+//			qFatal("Unrecognized option: %s", poptBadOption(poptCon, 0));
+			qWarning("Unrecognized option: %s", poptBadOption(poptCon, 0));
+			continue;
 		}
 
 		switch (option)

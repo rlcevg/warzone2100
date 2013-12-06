@@ -1987,7 +1987,6 @@ bool MAPTILE::isFriendlyOccupied(int player)
 {
 	for (UnitList::iterator i = units.begin(); i != units.end(); ++i)
 	{
-		// TODO: Check if droid spotted himself
 		if (aiCheckAlliances((*i)->player, player))
 		{
 			return true;

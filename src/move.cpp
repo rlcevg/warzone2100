@@ -1174,9 +1174,200 @@ static void moveCalcDroidSlide(DROID *psDroid, int *pmx, int *pmy)
 	CHECK_DROID(psDroid);
 }
 
+/// ---
+const float RVO_EPSILON = 0.00001f;
+
+struct Line
+{
+	Vector2f point;
+	Vector2f direction;
+};
+
+inline float absSq(const Vector2f &vector)
+{
+	return vector * vector;
+}
+
+inline float sqr(float a)
+{
+	return a * a;
+}
+
+inline float det(const Vector2f &vector1, const Vector2f &vector2)
+{
+	return vector1.x * vector2.y - vector1.y * vector2.x;
+}
+
+inline float abs(const Vector2f &vector)
+{
+	return std::sqrt(vector * vector);
+}
+
+inline Vector2f normalize(const Vector2f &vector)
+{
+	return vector / abs(vector);
+}
+
+bool linearProgram1(const std::vector<Line> &lines, size_t lineNo, float radius, const Vector2f &optVelocity, bool directionOpt, Vector2f &result)
+{
+	const float dotProduct = lines[lineNo].point * lines[lineNo].direction;
+	const float discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[lineNo].point);
+
+	if (discriminant < 0.0f) {
+		/* Max speed circle fully invalidates line lineNo. */
+		return false;
+	}
+
+	const float sqrtDiscriminant = std::sqrt(discriminant);
+	float tLeft = -dotProduct - sqrtDiscriminant;
+	float tRight = -dotProduct + sqrtDiscriminant;
+
+	for (size_t i = 0; i < lineNo; ++i) {
+		const float denominator = det(lines[lineNo].direction, lines[i].direction);
+		const float numerator = det(lines[i].direction, lines[lineNo].point - lines[i].point);
+
+		if (std::fabs(denominator) <= RVO_EPSILON) {
+			/* Lines lineNo and i are (almost) parallel. */
+			if (numerator < 0.0f) {
+				return false;
+			}
+			else {
+				continue;
+			}
+		}
+
+		const float t = numerator / denominator;
+
+		if (denominator >= 0.0f) {
+			/* Line i bounds line lineNo on the right. */
+			tRight = std::min(tRight, t);
+		}
+		else {
+			/* Line i bounds line lineNo on the left. */
+			tLeft = std::max(tLeft, t);
+		}
+
+		if (tLeft > tRight) {
+			return false;
+		}
+	}
+
+	if (directionOpt) {
+		/* Optimize direction. */
+		if (optVelocity * lines[lineNo].direction > 0.0f) {
+			/* Take right extreme. */
+			result = lines[lineNo].point + lines[lineNo].direction * tRight;
+		}
+		else {
+			/* Take left extreme. */
+			result = lines[lineNo].point + lines[lineNo].direction * tLeft;
+		}
+	}
+	else {
+		/* Optimize closest point. */
+		const float t = lines[lineNo].direction * (optVelocity - lines[lineNo].point);
+
+		if (t < tLeft) {
+			result = lines[lineNo].point + lines[lineNo].direction * tLeft;
+		}
+		else if (t > tRight) {
+			result = lines[lineNo].point + lines[lineNo].direction * tRight;
+		}
+		else {
+			result = lines[lineNo].point + lines[lineNo].direction * t;
+		}
+	}
+
+	return true;
+}
+
+size_t linearProgram2(const std::vector<Line> &lines, float radius, const Vector2f &optVelocity, bool directionOpt, Vector2f &result)
+{
+	if (directionOpt) {
+		/*
+		 * Optimize direction. Note that the optimization velocity is of unit
+		 * length in this case.
+		 */
+		result = optVelocity * radius;
+	}
+	else if (absSq(optVelocity) > sqr(radius)) {
+		/* Optimize closest point and outside circle. */
+		result = normalize(optVelocity) * radius;
+	}
+	else {
+		/* Optimize closest point and inside circle. */
+		result = optVelocity;
+	}
+
+	for (size_t i = 0; i < lines.size(); ++i) {
+		if (det(lines[i].direction, lines[i].point - result) > 0.0f) {
+			/* Result does not satisfy constraint i. Compute new optimal result. */
+			const Vector2f tempResult = result;
+
+			if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result)) {
+				result = tempResult;
+				return i;
+			}
+		}
+	}
+
+	return lines.size();
+}
+
+void linearProgram3(const std::vector<Line> &lines, size_t numObstLines, size_t beginLine, float radius, Vector2f &result)
+{
+	float distance = 0.0f;
+
+	for (size_t i = beginLine; i < lines.size(); ++i) {
+		if (det(lines[i].direction, lines[i].point - result) > distance) {
+			/* Result does not satisfy constraint of line i. */
+			std::vector<Line> projLines(lines.begin(), lines.begin() + static_cast<ptrdiff_t>(numObstLines));
+
+			for (size_t j = numObstLines; j < i; ++j) {
+				Line line;
+
+				float determinant = det(lines[i].direction, lines[j].direction);
+
+				if (std::fabs(determinant) <= RVO_EPSILON) {
+					/* Line i and line j are parallel. */
+					if (lines[i].direction * lines[j].direction > 0.0f) {
+						/* Line i and line j point in the same direction. */
+						continue;
+					}
+					else {
+						/* Line i and line j point in opposite direction. */
+						line.point = (lines[i].point + lines[j].point) * 0.5f;
+					}
+				}
+				else {
+					line.point = lines[i].point + lines[i].direction * (det(lines[j].direction, lines[i].point - lines[j].point) / determinant);
+				}
+
+				line.direction = normalize(lines[j].direction - lines[i].direction);
+				projLines.push_back(line);
+			}
+
+			const Vector2f tempResult = result;
+
+			if (linearProgram2(projLines, radius, Vector2f(-lines[i].direction.y, lines[i].direction.x), true, result) < projLines.size())
+			{
+				/* This should in principle not happen.  The result is by definition
+				 * already in the feasible region of this linear program. If it fails,
+				 * it is due to small floating point error, and the current result is
+				 * kept.
+				 */
+				result = tempResult;
+			}
+
+			distance = det(lines[i].direction, lines[i].point - result);
+		}
+	}
+}
+
 // get an obstacle avoidance vector
 static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 {
+/*
 	int32_t                 numObst = 0, distTot = 0;
 	Vector2i                dir(0, 0);
 	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
@@ -1288,6 +1479,152 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 	int ratio = std::min(distTot * ourRadius/2, 65536);
 
 	return dest * (65536 - ratio) + avoid * ratio;
+*/
+
+	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
+	ASSERT(psPropStats, "invalid propulsion stats pointer");
+	int ourMaxSpeed = psPropStats->maxSpeed;
+	int ourRadius = moveObjRadius(psDroid) + 10;
+	if (ourMaxSpeed == 0)
+	{
+		return dest;  // No point deciding which way to go, if we can't move...
+	}
+
+	std::vector<Line> orcaLines;
+//	orcaLines.clear();
+	float timeHorizon = deltaGameTime * 8;
+	const float invTimeHorizon = 1.0f / timeHorizon;
+	Vector2i tmp;
+
+	// Velocity guess: Guess the velocity the droid is actually moving at.
+	tmp = iSinCosR(psDroid->sMove.moveDir, psDroid->sMove.speed);
+	Vector2f ourVelocity = Vector2f(tmp);
+
+	// scan the neighbours for obstacles
+	static GridList gridList;  // static to avoid allocations.
+	gridList = gridStartIterate(psDroid->pos.x, psDroid->pos.y, AVOID_DIST);
+	/* Create agent ORCA lines. */
+	for (GridIterator gi = gridList.begin(); gi != gridList.end(); ++gi)
+	{
+		if (*gi == psDroid)
+		{
+			continue;  // Don't try to avoid ourselves.
+		}
+
+		DROID *psObstacle = castDroid(*gi);
+		if (psObstacle == NULL)
+		{
+			// Object wrong type to worry about.
+			continue;
+		}
+
+		// vtol droids only avoid each other and don't affect ground droids
+		if (isVtolDroid(psDroid) != isVtolDroid(psObstacle))
+		{
+			continue;
+		}
+
+		if ((psObstacle->droidType == DROID_TRANSPORTER || psObstacle->droidType == DROID_SUPERTRANSPORTER) ||
+		    (psObstacle->droidType == DROID_PERSON &&
+		     psObstacle->player != psDroid->player))
+		{
+			// don't avoid people on the other side - run over them
+			continue;
+		}
+
+//		PROPULSION_STATS *obstaclePropStats = asPropulsionStats + psObstacle->asBits[COMP_PROPULSION];
+//		int obstMaxSpeed = obstaclePropStats->maxSpeed;
+		int obstRadius = moveObjRadius(psObstacle) + 10;
+//		int totalRadius = ourRadius + obstRadius;
+/// ---
+		// Velocity guess: Guess the velocity the obstacle is actually moving at.
+		tmp = iSinCosR(psObstacle->sMove.moveDir, psObstacle->sMove.speed);
+		Vector2f obstVelocity = Vector2f(tmp);
+
+		tmp = removeZ(psObstacle->pos - psDroid->pos);
+		const Vector2f relativePosition = Vector2f(tmp);
+		const Vector2f relativeVelocity = ourVelocity - obstVelocity;
+		const float distSq = absSq(relativePosition);
+		const float combinedRadius = (ourRadius + obstRadius);
+		const float combinedRadiusSq = sqr(combinedRadius);
+
+		Line line;
+		Vector2f u;
+
+		if (distSq > combinedRadiusSq)
+		{
+			/* No collision. */
+			const Vector2f w = relativeVelocity - relativePosition * invTimeHorizon;
+			/* Vector from cutoff center to relative velocity. */
+			const float wLengthSq = absSq(w);
+
+			const float dotProduct1 = w * relativePosition;
+
+			if (dotProduct1 < 0.0f && sqr(dotProduct1) > combinedRadiusSq * wLengthSq)
+			{
+				/* Project on cut-off circle. */
+				const float wLength = std::sqrt(wLengthSq);
+				const Vector2f unitW = w / wLength;
+
+				line.direction = Vector2f(unitW.y, -unitW.x);
+				u = unitW * (combinedRadius * invTimeHorizon - wLength);
+			}
+			else
+			{
+				/* Project on legs. */
+				const float leg = std::sqrt(distSq - combinedRadiusSq);
+
+				if (det(relativePosition, w) > 0.0f)
+				{
+					/* Project on left leg. */
+					line.direction = Vector2f(relativePosition.x * leg - relativePosition.y * combinedRadius,
+											  relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
+				}
+				else
+				{
+					/* Project on right leg. */
+					line.direction = -Vector2f(relativePosition.x * leg + relativePosition.y * combinedRadius,
+											   -relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
+				}
+
+				const float dotProduct2 = relativeVelocity * line.direction;
+
+				u = line.direction * dotProduct2 - relativeVelocity;
+			}
+		}
+		else
+		{
+			/* Collision. Project on cut-off circle of time timeStep. */
+			const float invTimeStep = 1.0f / deltaGameTime;
+
+			/* Vector from cutoff center to relative velocity. */
+			const Vector2f w = relativeVelocity - relativePosition * invTimeStep;
+
+			const float wLength = abs(w);
+			const Vector2f unitW = w / wLength;
+
+			line.direction = Vector2f(unitW.y, -unitW.x);
+			u = unitW * (combinedRadius * invTimeStep - wLength);
+		}
+
+		line.point = ourVelocity + u * 0.5f;
+		orcaLines.push_back(line);
+	}
+
+	// Velocity pref: Calc the velocity the droid wants to move at.
+	Vector2i ourTargetDiff = psDroid->sMove.target - psDroid->pos;
+	tmp = iSinCosR(iAtan2(ourTargetDiff), ourMaxSpeed * std::min(iHypot(ourTargetDiff), AVOID_DIST)/AVOID_DIST);
+	Vector2f ourVelocityPref = Vector2f(tmp);
+
+	Vector2f newVelocity(ourVelocity);
+	size_t lineFail = linearProgram2(orcaLines, ourMaxSpeed, ourVelocityPref, false, newVelocity);
+
+	if (lineFail < orcaLines.size())
+	{
+		linearProgram3(orcaLines, 0/*numObstLines*/, lineFail, ourMaxSpeed, newVelocity);
+	}
+/// ---
+	return Vector2i(newVelocity.x, newVelocity.y);
 }
 
 /*!
