@@ -1064,6 +1064,26 @@ static void drawTiles(iView *player)
 #ifdef DEBUG
 	glLineWidth(1.0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	const int AVOID_DIST = TILE_UNITS*2;
+	pie_SetRendMode(REND_OPAQUE);
+	pie_SetTexturePage(TEXPAGE_NONE);
+	for (DROID *psDroid = apsDroidLists[selectedPlayer]; psDroid; psDroid = psDroid->psNext)
+	{
+		PROPULSION_STATS *psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
+		Vector2i ourTargetDiff = psDroid->sMove.target - psDroid->pos;
+		Vector2i tmp = iSinCosR(iAtan2(ourTargetDiff), psPropStats->maxSpeed * std::min(iHypot(ourTargetDiff), AVOID_DIST)/AVOID_DIST);
+		Vector2i tmp2 = iSinCosR(psDroid->sMove.moveDir, psDroid->sMove.speed);
+
+		glBegin(GL_LINES);
+		glColor3f(0.5, 0.5, 1.0);
+		glVertex3i(psDroid->pos.x, psDroid->pos.z + 1, -psDroid->pos.y);
+		glVertex3i(psDroid->pos.x + tmp.x, psDroid->pos.z + 1, -(psDroid->pos.y + tmp.y));
+		glColor3f(0.3, 1.0, 0.3);
+		glVertex3i(psDroid->pos.x, psDroid->pos.z, -psDroid->pos.y);
+		glVertex3i(psDroid->pos.x + tmp2.x, psDroid->pos.z, -(psDroid->pos.y + tmp2.y));
+		glEnd();
+	}
 #endif
 
 	// and to the warzone modelview transform
@@ -1117,7 +1137,13 @@ static void drawTiles(iView *player)
 	GL_DEBUG("Draw 3D scene - blueprints");
 	displayBlueprints();
 
+#ifdef DEBUG
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
 	pie_RemainingPasses(); // draws shadows and transparent shapes
+#ifdef DEBUG
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 
 	if(!gamePaused())
 	{

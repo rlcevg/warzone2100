@@ -476,7 +476,7 @@ static bool moveBlockingTileCallback(Vector2i pos, int32_t dist, void *data_)
 	BLOCKING_CALLBACK_DATA *data = (BLOCKING_CALLBACK_DATA *)data_;
 	int32_t mapX = map_coord(pos.x);
 	int32_t mapY = map_coord(pos.y);
-	bool blockingTile = fpathBlockingTile(mapX, mapY, data->propulsionType) || mapTile(mapX, mapY)->isFriendlyOccupied(data->player);
+	bool blockingTile = fpathBlockingTile(mapX, mapY, data->propulsionType);// || mapTile(mapX, mapY)->isFriendlyOccupied(data->player);
 	data->blocking |= pos != data->src && pos != data->dst && blockingTile;
 	return !data->blocking;
 }
@@ -1484,7 +1484,7 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
 	ASSERT(psPropStats, "invalid propulsion stats pointer");
 	int ourMaxSpeed = psPropStats->maxSpeed;
-	int ourRadius = moveObjRadius(psDroid) + 10;
+	int ourRadius = moveObjRadius(psDroid) * 2;
 	if (ourMaxSpeed == 0)
 	{
 		return dest;  // No point deciding which way to go, if we can't move...
@@ -1534,7 +1534,7 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 
 //		PROPULSION_STATS *obstaclePropStats = asPropulsionStats + psObstacle->asBits[COMP_PROPULSION];
 //		int obstMaxSpeed = obstaclePropStats->maxSpeed;
-		int obstRadius = moveObjRadius(psObstacle) + 10;
+		int obstRadius = moveObjRadius(psObstacle);
 //		int totalRadius = ourRadius + obstRadius;
 /// ---
 		// Velocity guess: Guess the velocity the obstacle is actually moving at.
@@ -1613,10 +1613,11 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 
 	// Velocity pref: Calc the velocity the droid wants to move at.
 	Vector2i ourTargetDiff = psDroid->sMove.target - psDroid->pos;
+//	ourMaxSpeed = psDroid->sMove.speed;
 	tmp = iSinCosR(iAtan2(ourTargetDiff), ourMaxSpeed * std::min(iHypot(ourTargetDiff), AVOID_DIST)/AVOID_DIST);
 	Vector2f ourVelocityPref = Vector2f(tmp);
 
-	Vector2f newVelocity(ourVelocity);
+	Vector2f newVelocity;
 	size_t lineFail = linearProgram2(orcaLines, ourMaxSpeed, ourVelocityPref, false, newVelocity);
 
 	if (lineFail < orcaLines.size())
@@ -1624,6 +1625,7 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 		linearProgram3(orcaLines, 0/*numObstLines*/, lineFail, ourMaxSpeed, newVelocity);
 	}
 /// ---
+	// FIXME: At this point only direction matters. Speed calculated elsewhere (moveCalcDroidSpeed)
 	return Vector2i(newVelocity.x, newVelocity.y);
 }
 
