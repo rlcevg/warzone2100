@@ -1364,130 +1364,15 @@ void linearProgram3(const std::vector<Line> &lines, size_t numObstLines, size_t 
 	}
 }
 
-// get an obstacle avoidance vector
-static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
+void moveCalcVelocity(DROID *psDroid, Vector2i &dest, SDWORD &speed)
 {
-/*
-	int32_t                 numObst = 0, distTot = 0;
-	Vector2i                dir(0, 0);
-	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
-
-	ASSERT(psPropStats, "invalid propulsion stats pointer");
-
-	int ourMaxSpeed = psPropStats->maxSpeed;
-	int ourRadius = moveObjRadius(psDroid);
-	if (ourMaxSpeed == 0)
-	{
-		return dest;  // No point deciding which way to go, if we can't move...
-	}
-
-	// scan the neighbours for obstacles
-	static GridList gridList;  // static to avoid allocations.
-	gridList = gridStartIterate(psDroid->pos.x, psDroid->pos.y, AVOID_DIST);
-	for (GridIterator gi = gridList.begin(); gi != gridList.end(); ++gi)
-	{
-		if (*gi == psDroid)
-		{
-			continue;  // Don't try to avoid ourselves.
-		}
-
-		DROID *psObstacle = castDroid(*gi);
-		if (psObstacle == NULL)
-		{
-			// Object wrong type to worry about.
-			continue;
-		}
-
-		// vtol droids only avoid each other and don't affect ground droids
-		if (isVtolDroid(psDroid) != isVtolDroid(psObstacle))
-		{
-			continue;
-		}
-
-		if ((psObstacle->droidType == DROID_TRANSPORTER || psObstacle->droidType == DROID_SUPERTRANSPORTER) ||
-		    (psObstacle->droidType == DROID_PERSON &&
-		     psObstacle->player != psDroid->player))
-		{
-			// don't avoid people on the other side - run over them
-			continue;
-		}
-
-		PROPULSION_STATS *obstaclePropStats = asPropulsionStats + psObstacle->asBits[COMP_PROPULSION];
-		int obstacleMaxSpeed = obstaclePropStats->maxSpeed;
-		int obstacleRadius = moveObjRadius(psObstacle);
-		int totalRadius = ourRadius + obstacleRadius;
-
-		// Try to guess where the obstacle will be when we get close.
-		// Velocity guess 1: Guess the velocity the droid is actually moving at.
-		Vector2i obstVelocityGuess1 = iSinCosR(psObstacle->sMove.moveDir, psObstacle->sMove.speed);
-		// Velocity guess 2: Guess the velocity the droid wants to move at.
-		Vector2i obstTargetDiff = psObstacle->sMove.target - psObstacle->pos;
-		Vector2i obstVelocityGuess2 = iSinCosR(iAtan2(obstTargetDiff), obstacleMaxSpeed * std::min(iHypot(obstTargetDiff), AVOID_DIST)/AVOID_DIST);
-		if (moveBlocked(psObstacle))
-		{
-			obstVelocityGuess2 = Vector2i(0, 0);  // This obstacle isn't going anywhere, even if it wants to.
-			//obstVelocityGuess2 = -obstVelocityGuess2;
-		}
-		// Guess the average of the two guesses.
-		Vector2i obstVelocityGuess = (obstVelocityGuess1 + obstVelocityGuess2) / 2;
-
-		// Find the guessed obstacle speed and direction, clamped to half our speed.
-		int obstSpeedGuess = std::min(iHypot(obstVelocityGuess), ourMaxSpeed/2);
-		uint16_t obstDirectionGuess = iAtan2(obstVelocityGuess);
-
-		// Position of obstacle relative to us.
-		Vector2i diff = removeZ(psObstacle->pos - psDroid->pos);
-
-		// Find very approximate position of obstacle relative to us when we get close, based on our guesses.
-		Vector2i deltaDiff = iSinCosR(obstDirectionGuess, (int64_t)std::max(iHypot(diff) - totalRadius*2/3, 0)*obstSpeedGuess / ourMaxSpeed);
-		if (!fpathBlockingTile(map_coord(psObstacle->pos.x + deltaDiff.x), map_coord(psObstacle->pos.y + deltaDiff.y), obstaclePropStats->propulsionType))  // Don't assume obstacle can go through cliffs.
-		{
-			diff += deltaDiff;
-		}
-
-		if (diff * dest < 0)
-		{
-			// object behind
-			continue;
-		}
-
-		int centreDist = std::max(iHypot(diff), 1);
-		int dist = std::max(centreDist - totalRadius, 1);
-
-		dir += diff * 65536 / (centreDist * dist);
-		distTot += 65536 / dist;
-		numObst += 1;
-	}
-
-	if (dir == Vector2i(0, 0) || numObst == 0)
-	{
-		return dest;
-	}
-
-	dir = Vector2i(dir.x / numObst, dir.y / numObst);
-	distTot /= numObst;
-
-	// Create the avoid vector
-	Vector2i o(dir.y, -dir.x);
-	Vector2i avoid = dest*o < 0? -o : o;
-
-	// Normalise dest and avoid.
-	dest = dest * 32768/(iHypot(dest) + 1);
-	avoid = avoid * 32768/(iHypot(avoid) + 1);
-
-	// combine the avoid vector and the target vector
-	int ratio = std::min(distTot * ourRadius/2, 65536);
-
-	return dest * (65536 - ratio) + avoid * ratio;
-*/
-
 	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
 	ASSERT(psPropStats, "invalid propulsion stats pointer");
 	int ourMaxSpeed = psPropStats->maxSpeed;
 	int ourRadius = moveObjRadius(psDroid) * 2;
 	if (ourMaxSpeed == 0)
 	{
-		return dest;  // No point deciding which way to go, if we can't move...
+		return;// dest;  // No point deciding which way to go, if we can't move...
 	}
 
 	std::vector<Line> orcaLines;
@@ -1626,7 +1511,138 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 	}
 /// ---
 	// FIXME: At this point only direction matters. Speed calculated elsewhere (moveCalcDroidSpeed)
-	return Vector2i(newVelocity.x, newVelocity.y);
+	dest = Vector2i(newVelocity.x, newVelocity.y);
+	speed = iHypot(dest);
+}
+
+void moveGetVelocity(DROID *psDroid, uint16_t &direction, SDWORD &speed)
+{
+	Vector2i src = removeZ(psDroid->pos);  // Do not want precice precision here, would overflow.
+	Vector2i target = psDroid->sMove.target;
+	Vector2i dest = target - src;
+
+	// Transporters don't need to avoid obstacles, but everyone else should
+	if (psDroid->droidType != DROID_TRANSPORTER && psDroid->droidType != DROID_SUPERTRANSPORTER)
+	{
+		moveCalcVelocity(psDroid, dest, speed);
+	}
+	direction = iAtan2(dest);
+}
+
+// get an obstacle avoidance vector
+static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
+{
+	int32_t                 numObst = 0, distTot = 0;
+	Vector2i                dir(0, 0);
+	PROPULSION_STATS *      psPropStats = asPropulsionStats + psDroid->asBits[COMP_PROPULSION];
+
+	ASSERT(psPropStats, "invalid propulsion stats pointer");
+
+	int ourMaxSpeed = psPropStats->maxSpeed;
+	int ourRadius = moveObjRadius(psDroid);
+	if (ourMaxSpeed == 0)
+	{
+		return dest;  // No point deciding which way to go, if we can't move...
+	}
+
+	// scan the neighbours for obstacles
+	static GridList gridList;  // static to avoid allocations.
+	gridList = gridStartIterate(psDroid->pos.x, psDroid->pos.y, AVOID_DIST);
+	for (GridIterator gi = gridList.begin(); gi != gridList.end(); ++gi)
+	{
+		if (*gi == psDroid)
+		{
+			continue;  // Don't try to avoid ourselves.
+		}
+
+		DROID *psObstacle = castDroid(*gi);
+		if (psObstacle == NULL)
+		{
+			// Object wrong type to worry about.
+			continue;
+		}
+
+		// vtol droids only avoid each other and don't affect ground droids
+		if (isVtolDroid(psDroid) != isVtolDroid(psObstacle))
+		{
+			continue;
+		}
+
+		if ((psObstacle->droidType == DROID_TRANSPORTER || psObstacle->droidType == DROID_SUPERTRANSPORTER) ||
+		    (psObstacle->droidType == DROID_PERSON &&
+		     psObstacle->player != psDroid->player))
+		{
+			// don't avoid people on the other side - run over them
+			continue;
+		}
+
+		PROPULSION_STATS *obstaclePropStats = asPropulsionStats + psObstacle->asBits[COMP_PROPULSION];
+		int obstacleMaxSpeed = obstaclePropStats->maxSpeed;
+		int obstacleRadius = moveObjRadius(psObstacle);
+		int totalRadius = ourRadius + obstacleRadius;
+
+		// Try to guess where the obstacle will be when we get close.
+		// Velocity guess 1: Guess the velocity the droid is actually moving at.
+		Vector2i obstVelocityGuess1 = iSinCosR(psObstacle->sMove.moveDir, psObstacle->sMove.speed);
+		// Velocity guess 2: Guess the velocity the droid wants to move at.
+		Vector2i obstTargetDiff = psObstacle->sMove.target - psObstacle->pos;
+		Vector2i obstVelocityGuess2 = iSinCosR(iAtan2(obstTargetDiff), obstacleMaxSpeed * std::min(iHypot(obstTargetDiff), AVOID_DIST)/AVOID_DIST);
+		if (moveBlocked(psObstacle))
+		{
+			obstVelocityGuess2 = Vector2i(0, 0);  // This obstacle isn't going anywhere, even if it wants to.
+			//obstVelocityGuess2 = -obstVelocityGuess2;
+		}
+		// Guess the average of the two guesses.
+		Vector2i obstVelocityGuess = (obstVelocityGuess1 + obstVelocityGuess2) / 2;
+
+		// Find the guessed obstacle speed and direction, clamped to half our speed.
+		int obstSpeedGuess = std::min(iHypot(obstVelocityGuess), ourMaxSpeed/2);
+		uint16_t obstDirectionGuess = iAtan2(obstVelocityGuess);
+
+		// Position of obstacle relative to us.
+		Vector2i diff = removeZ(psObstacle->pos - psDroid->pos);
+
+		// Find very approximate position of obstacle relative to us when we get close, based on our guesses.
+		Vector2i deltaDiff = iSinCosR(obstDirectionGuess, (int64_t)std::max(iHypot(diff) - totalRadius*2/3, 0)*obstSpeedGuess / ourMaxSpeed);
+		if (!fpathBlockingTile(map_coord(psObstacle->pos.x + deltaDiff.x), map_coord(psObstacle->pos.y + deltaDiff.y), obstaclePropStats->propulsionType))  // Don't assume obstacle can go through cliffs.
+		{
+			diff += deltaDiff;
+		}
+
+		if (diff * dest < 0)
+		{
+			// object behind
+			continue;
+		}
+
+		int centreDist = std::max(iHypot(diff), 1);
+		int dist = std::max(centreDist - totalRadius, 1);
+
+		dir += diff * 65536 / (centreDist * dist);
+		distTot += 65536 / dist;
+		numObst += 1;
+	}
+
+	if (dir == Vector2i(0, 0) || numObst == 0)
+	{
+		return dest;
+	}
+
+	dir = Vector2i(dir.x / numObst, dir.y / numObst);
+	distTot /= numObst;
+
+	// Create the avoid vector
+	Vector2i o(dir.y, -dir.x);
+	Vector2i avoid = dest*o < 0? -o : o;
+
+	// Normalise dest and avoid.
+	dest = dest * 32768/(iHypot(dest) + 1);
+	avoid = avoid * 32768/(iHypot(avoid) + 1);
+
+	// combine the avoid vector and the target vector
+	int ratio = std::min(distTot * ourRadius/2, 65536);
+
+	return dest * (65536 - ratio) + avoid * ratio;
 }
 
 /*!
@@ -2565,8 +2581,8 @@ void moveUpdateDroid(DROID *psDroid)
 		{
 			// Calculate a target vector
 			moveDir = moveGetDirection(psDroid);
-
 			moveSpeed = moveCalcDroidSpeed(psDroid);
+//			moveGetVelocity(psDroid, moveDir, moveSpeed);
 		}
 		break;
 	case MOVEWAITROUTE:
@@ -2664,6 +2680,7 @@ void moveUpdateDroid(DROID *psDroid)
 
 		moveDir = moveGetDirection(psDroid);
 		moveSpeed = moveCalcDroidSpeed(psDroid);
+//		moveGetVelocity(psDroid, moveDir, moveSpeed);
 
 		if ((psDroid->sMove.bumpTime != 0) &&
 			(psDroid->sMove.pauseTime + psDroid->sMove.bumpTime + BLOCK_PAUSETIME < gameTime))
