@@ -344,6 +344,8 @@ static void moveShuffleDroid(DROID *psDroid, Vector2i s)
 		return;
 	}
 
+//	mx *= 2;
+//	my *= 2;
 	// check the location for vtols
 	Vector2i tar = removeZ(psDroid->pos) + Vector2i(mx, my);
 	if (isVtolDroid(psDroid))
@@ -1121,6 +1123,16 @@ static void moveCalcDroidSlide(DROID *psDroid, int *pmx, int *pmy)
 			continue;
 		}
 
+//		const float cos60 = cosf(M_PI / 180.0 * 15);
+////		Vector2i dest = psDroid->sMove.target - removeZ(psDroid->pos);
+//		Vector2i dest = removeZ(psObj->pos - psDroid->pos);
+//		Vector2i dir = iSinCosR(psDroid->sMove.moveDir, 65536);
+//		float cosFi = (float)(dest * dir) / (iHypot(dest) * iHypot(dir));
+//		if (abs(cosFi) > cos60)
+//		{
+//			continue;
+//		}
+
 		if (radSq > distSq)
 		{
 			if (psObst != NULL)
@@ -1676,7 +1688,7 @@ static bool moveReachedWayPoint(DROID *psDroid)
 	if (last && psDroid->sMove.bumpTime != 0)
 	{
 		// Make waypoint tolerance 1 tile after 0 seconds, 2 tiles after 3 seconds, X tiles after (X + 1)² seconds.
-		sqprecision = (gameTime - psDroid->sMove.bumpTime + GAME_TICKS_PER_SEC)*(TILE_UNITS*TILE_UNITS / GAME_TICKS_PER_SEC);
+		sqprecision = (gameTime - psDroid->sMove.bumpTime + GAME_TICKS_PER_SEC)*(TILE_UNITS*TILE_UNITS / GAME_TICKS_PER_SEC);// * 2;
 	}
 
 	// Else check current waypoint
